@@ -40,12 +40,52 @@ class ControllerPaymentsveainvoice extends Controller {
 
         $this->id = 'payment';
 
+        //wip
+        $respUrl = $this->getGetAddressFrame();
+        if($respUrl->ResultCode == 0){
+            $this->data['getAddressIframeUrl'] = $respUrl->Url;
+        }else{
+            $this->data['getAddressIframeUrlError'] = $respUrl->ErrorMessage;
+        }
+        //wip
+
         if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/svea_invoice.tpl')) {
             $this->template = $this->config->get('config_template') . '/template/payment/svea_invoice.tpl';
         } else {
             $this->template = 'default/template/payment/svea_invoice.tpl';
         }
         $this->render();
+    }
+    /**
+     * Curls HTTP request to server
+     * @return response with Url
+     */
+    public function getGetAddressFrame(){
+         //wip
+          $auth = "79021:Sverigetest:Sverigetest";
+          $auth_coded = base64_encode($auth);
+          //$header[] = 'Content-length: 0';
+          //$header[] = 'Content-type: application/text';
+          $header[] = 'Authorization: Basic '.$auth_coded;
+         $server_url = $this->setServerURL();
+         $return_url = urlencode($server_url.'index.php?route=payment/svea_invoice/responseSvea');
+        $fieldsString = "languagecode=sv&countrycode=se&returnurl=$return_url&iscompany=false";
+         $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch, CURLOPT_URL, 'https://testwpyweb01.sveaweb.se/HostedGetAddress.MVC/api/url');
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        //force curl to trust https
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        //returns a html page with redirecting to bank...
+        $responseJSON = json_decode(curl_exec($ch));
+       //  var_dump(curl_getinfo($ch));
+        curl_close($ch);
+
+        return $responseJSON;
+
     }
 
     private function responseCodes($err,$msg = "") {
